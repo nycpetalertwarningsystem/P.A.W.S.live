@@ -1,301 +1,125 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { getLoginUrl } from "@/const";
-import { Link } from "wouter";
-import { useEffect, useState } from "react";
-import { MembershipCounter } from "@/components/MembershipCounter";
+import { useLocation } from "wouter";
 
 export default function Home() {
-  const { user: isAuthenticated } = useAuth();
-  const [mounted, setMounted] = useState(false);
+  const { user, loading, isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
+  const loginUrl = getLoginUrl();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+      </div>
+    );
+  }
 
-  if (!mounted) return null;
+  if (isAuthenticated) {
+    setLocation("/dashboard");
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 border-b border-gray-200 bg-white">
-        <div className="container flex h-16 items-center justify-between">
+      <nav className="border-b border-border bg-card">
+        <div className="container py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/manus-storage/paws_logo_a79b277d.png" alt="P.A.W.S." className="h-8 w-8" />
-            <span className="font-bold text-[#1A1A1A]">P.A.W.S.</span>
+            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
+              <span className="text-accent-foreground font-bold text-sm">PA</span>
+            </div>
+            <span className="text-lg font-bold text-foreground">PetAlert</span>
           </div>
-          <div className="hidden gap-8 sm:flex">
-            <a href="#about" className="text-sm font-medium text-[#333333] hover:text-[#FF6B35]">About</a>
-            <a href="#services" className="text-sm font-medium text-[#333333] hover:text-[#FF6B35]">Services</a>
-            <Link href="/invest" className="text-sm font-medium text-[#333333] hover:text-[#FF6B35]">Invest</Link>
-            <Link href="/careers" className="text-sm font-medium text-[#333333] hover:text-[#FF6B35]">Careers</Link>
-            <Link href="/contact" className="text-sm font-medium text-[#333333] hover:text-[#FF6B35]">Contact</Link>
-          </div>
-          <a href={isAuthenticated ? "/dashboard" : getLoginUrl()} className="btn-primary">
-            {isAuthenticated ? "Dashboard" : "Sign In"}
+          <a href={loginUrl} className="text-sm text-muted-foreground hover:text-foreground transition-smooth">
+            Sign In
           </a>
         </div>
       </nav>
 
-      {/* Hero Section - Video */}
-      <section className="relative overflow-hidden bg-black py-12 sm:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            {/* Video Player */}
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl mb-8">
-              <video
-                width="100%"
-                height="auto"
-                controls
-                autoPlay
-                muted
-                className="w-full h-auto"
-                poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'%3E%3Crect fill='%23FF6B35' width='1280' height='720'/%3E%3C/svg%3E"
+      {/* Hero Section */}
+      <section className="flex-1 flex items-center">
+        <div className="container py-24 md:py-32">
+          <div className="max-w-3xl">
+            <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
+              Monitor Your Pets with <span className="text-accent">Real-Time Alerts</span>
+            </h1>
+            <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
+              PetAlert Warning System empowers pet owners to stay connected with their beloved companions. Receive instant notifications when important thresholds are triggered, ensuring your pets' safety and well-being at all times.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <a
+                href={loginUrl}
+                className="inline-flex items-center justify-center px-8 py-3 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition-smooth"
               >
-                <source src="/manus-storage/270_820af0db.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
-
-            {/* CTA Section */}
-            <div className="text-center">
-              <h1 className="mb-4 text-4xl font-bold text-white sm:text-5xl lg:text-6xl">
-                Protect Your Pets During Emergencies
-              </h1>
-              <p className="mb-8 text-lg text-gray-300 max-w-2xl mx-auto">
-                P.A.W.S. (Pet Alert Warning System) connects you with emergency responders to ensure your beloved pets are protected and accounted for when it matters most.
-              </p>
-              <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-                <a href={isAuthenticated ? "/dashboard" : getLoginUrl()} className="btn-primary bg-[#FF6B35] hover:bg-[#E55A24] text-white font-bold py-3 px-8 rounded-lg inline-block">
-                  Sign Up Now →
-                </a>
-                <a href="#about" className="btn-secondary border-2 border-white text-white hover:bg-white/10 font-bold py-3 px-8 rounded-lg inline-block">
-                  Learn More
-                </a>
-              </div>
+                Get Started
+              </a>
+              <button className="inline-flex items-center justify-center px-8 py-3 rounded-lg border border-border text-foreground font-semibold hover:bg-muted transition-smooth">
+                Learn More
+              </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Membership Counter Section */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-gray-50">
+      {/* Features Section */}
+      <section className="bg-card border-t border-border py-24">
         <div className="container">
-          <MembershipCounter />
-        </div>
-      </section>
-
-      {/* About Section */}
-      <section id="about" className="py-12 sm:py-20 lg:py-32">
-        <div className="container">
-          <div className="mb-12 text-center">
-            <div className="divider-orange mx-auto mb-4"></div>
-            <h2 className="section-title">About P.A.W.S.</h2>
-            <p className="section-subtitle">
-              Connecting Pet Owners with Emergency Responders
-            </p>
-          </div>
-
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-16 text-center">
+            Powerful Features for Pet Owners
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8">
             {[
               {
-                title: "Our Mission",
-                description: "To protect pets during emergencies by connecting pet owners with first responders who can access critical pet information when it matters most.",
+                title: "Real-Time Monitoring",
+                description: "Track your pet's vital metrics and environmental conditions with instant updates.",
+                icon: "📊",
               },
               {
-                title: "NYC Launch",
-                description: "Starting in New York City with a comprehensive pet alert system designed for urban environments and rapid emergency response.",
+                title: "Custom Alerts",
+                description: "Set personalized warning thresholds for each pet and receive notifications when triggered.",
+                icon: "🔔",
               },
               {
-                title: "National Expansion",
-                description: "Scaling nationally to protect millions of pets across the United States with consistent, reliable emergency response protocols.",
+                title: "Alert History",
+                description: "Review past alerts and events to identify patterns and trends in your pet's behavior.",
+                icon: "📋",
               },
-            ].map((item, idx) => (
-              <div key={idx} className="card-paws">
-                <h3 className="mb-4 text-2xl font-bold text-[#FF6B35]">{item.title}</h3>
-                <p className="text-[#333333]">{item.description}</p>
+            ].map((feature, idx) => (
+              <div key={idx} className="p-6 rounded-lg border border-border bg-background hover:shadow-premium transition-smooth">
+                <div className="text-4xl mb-4">{feature.icon}</div>
+                <h3 className="text-xl font-semibold text-foreground mb-3">{feature.title}</h3>
+                <p className="text-muted-foreground">{feature.description}</p>
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Services Section */}
-      <section id="services" className="bg-white py-12 sm:py-20 lg:py-32">
-        <div className="container">
-          <div className="mb-12 text-center">
-            <div className="divider-orange mx-auto mb-4"></div>
-            <h2 className="section-title">Our Services</h2>
-            <p className="section-subtitle">
-              Comprehensive Pet Protection Solutions
-            </p>
-          </div>
-
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                title: "Pet Profile Registration",
-                description: "Create detailed profiles for each pet including medical history, emergency contacts, and photos.",
-              },
-              {
-                title: "Alert Subscriptions",
-                description: "Stay informed with real-time alerts about neighborhood emergencies and pet safety updates.",
-              },
-              {
-                title: "Emergency Responder Access",
-                description: "First responders can instantly access pet and household data during emergencies.",
-              },
-              {
-                title: "Neighborhood Notifications",
-                description: "Receive alerts about lost pets and emergencies in your area.",
-              },
-              {
-                title: "Medical Information Storage",
-                description: "Securely store pet medical records, medications, and allergies.",
-              },
-              {
-                title: "24/7 Support",
-                description: "Our team is available around the clock to assist you and your pets.",
-              },
-            ].map((service, idx) => (
-              <div key={idx} className="card-paws">
-                <div className="mb-4 h-12 w-12 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center">
-                  <div className="h-6 w-6 rounded-full bg-[#FF6B35]"></div>
-                </div>
-                <h3 className="mb-2 text-xl font-bold text-[#1A1A1A]">{service.title}</h3>
-                <p className="text-[#333333]">{service.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Success Stories Section */}
-      <section className="py-12 sm:py-20 lg:py-32 bg-[#F5F5F5]">
-        <div className="container">
-          <div className="mb-12 text-center">
-            <div className="divider-orange mx-auto mb-4"></div>
-            <h2 className="section-title">Success Stories</h2>
-            <p className="section-subtitle">
-              Real Rescues, Real Impact
-            </p>
-          </div>
-
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                image: "/manus-storage/IMG_8857_7a3d884a.jpg",
-                title: "Curious Cat Peeking",
-                description: "A shy feline found safety through P.A.W.S. alert system.",
-              },
-              {
-                image: "/manus-storage/IMG_20260312_120316_8a468a86.jpg",
-                title: "Loving Companion",
-                description: "Reunited with family thanks to our emergency responder network.",
-              },
-              {
-                image: "/manus-storage/IMG_20260312_120318_ead9426d.jpg",
-                title: "Sweet Pup",
-                description: "Protected and cared for through P.A.W.S. registration.",
-              },
-              {
-                image: "/manus-storage/IMG_20260312_120320_227e9bc6.jpg",
-                title: "Gentle Soul",
-                description: "One of many pets we've helped find safety and comfort.",
-              },
-              {
-                image: "/manus-storage/IMG_20260312_120321_29c963b3.jpg",
-                title: "Faithful Friend",
-                description: "Safe, secure, and ready for a new adventure with P.A.W.S.",
-              },
-              {
-                image: "/manus-storage/20171213_154157_4d23b87d.jpg",
-                title: "Street Dog Saved",
-                description: "Rescued from the streets and given a second chance at life.",
-              },
-              {
-                image: "/manus-storage/f053dfc0-5325-11f1-8de0-cd03921a280d_8fef0bb8.png",
-                title: "Lucky - Blue Russian Cat",
-                description: "Rescued Jan 2025. Afraid at first, now the boss! One of the smartest cats around. Adopted by Tru.",
-              },
-            ].map((story, idx) => (
-              <div key={idx} className="rounded-xl overflow-hidden bg-white shadow-lg hover:shadow-xl transition">
-                <img src={story.image} alt={story.title} className="w-full h-48 object-cover" />
-                <div className="p-4">
-                  <h3 className="font-bold text-[#1A1A1A] mb-2">{story.title}</h3>
-                  <p className="text-sm text-[#333333]">{story.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Free Offer Banner */}
-      <section className="bg-gradient-to-r from-[#FF6B35] to-[#E55A24] py-8 sm:py-12 text-white">
-        <div className="container text-center">
-          <div className="inline-block rounded-full bg-white/20 px-6 py-2 mb-4">
-            <span className="text-sm font-bold">🎉 LIMITED TIME OFFER</span>
-          </div>
-          <h3 className="text-2xl sm:text-3xl font-bold mb-2">
-            First 10,000 Memberships FREE
-          </h3>
-          <p className="text-white/90 text-lg">
-            Sign up now and get lifetime free access as a founding member
-          </p>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="bg-[#1A1A1A] py-12 sm:py-20 lg:py-32 text-white">
+      <section className="py-24 bg-background">
         <div className="container text-center">
-          <h2 className="mb-4 text-4xl font-bold sm:text-5xl">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
             Ready to Protect Your Pets?
           </h2>
-          <p className="mb-8 text-lg text-gray-300">
-            Join thousands of pet owners who trust P.A.W.S. to keep their pets safe.
+          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Join thousands of pet owners who trust PetAlert Warning System to keep their companions safe.
           </p>
-          <a href={isAuthenticated ? "/dashboard" : getLoginUrl()} className="btn-primary">
-            Get Started Today - FREE
+          <a
+            href={loginUrl}
+            className="inline-flex items-center justify-center px-8 py-3 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition-smooth"
+          >
+            Start Your Free Trial
           </a>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white py-8 sm:py-12">
-        <div className="container">
-          <div className="grid gap-8 sm:grid-cols-4 mb-8">
-            <div>
-              <div className="mb-4 flex items-center gap-2">
-                <img src="/manus-storage/paws_logo_a79b277d.png" alt="P.A.W.S." className="h-8 w-8" />
-                <span className="font-bold text-[#1A1A1A]">P.A.W.S.</span>
-              </div>
-              <p className="text-sm text-[#333333]">Protecting pets since 2013</p>
-            </div>
-            <div>
-              <h4 className="mb-4 font-bold text-[#1A1A1A]">Product</h4>
-              <ul className="space-y-2 text-sm text-[#333333]">
-                <li><a href="#services" className="hover:text-[#FF6B35]">Services</a></li>
-                <li><a href="#about" className="hover:text-[#FF6B35]">About</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="mb-4 font-bold text-[#1A1A1A]">Company</h4>
-              <ul className="space-y-2 text-sm text-[#333333]">
-                <li><Link href="/contact" className="hover:text-[#FF6B35]">Contact</Link></li>
-
-              </ul>
-            </div>
-            <div>
-              <h4 className="mb-4 font-bold text-[#1A1A1A]">Legal</h4>
-              <ul className="space-y-2 text-sm text-[#333333]">
-                <li><a href="#" className="hover:text-[#FF6B35]">Privacy</a></li>
-                <li><a href="#" className="hover:text-[#FF6B35]">Terms</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-200 pt-8 text-center text-sm text-[#333333]">
-            <p>&copy; 2026 P.A.W.S. (Pet Alert Warning System LLC). All rights reserved.</p>
-          </div>
+      <footer className="border-t border-border bg-card py-8">
+        <div className="container text-center text-sm text-muted-foreground">
+          <p>&copy; 2026 PetAlert Warning System. All rights reserved.</p>
         </div>
       </footer>
     </div>

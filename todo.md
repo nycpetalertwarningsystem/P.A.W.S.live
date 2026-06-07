@@ -1,69 +1,63 @@
-# FiveM Gaming Hub - TODO
+# PetAlert Warning System - Project TODO
 
-## Phase 1: Design System & Landing Page
-- [ ] Create GTA-inspired color palette and typography
-- [ ] Design dark theme with neon accents (GTA style)
-- [ ] Build responsive layout system
-- [ ] Create landing page hero section
-- [ ] Add server status widget to hero
-- [ ] Implement navigation menu
+## Phase 1: Database Schema & Design Setup
+- [ ] Design database schema (users, pets, alerts, alert_thresholds, alert_history, notifications)
+- [ ] Create Drizzle schema with all tables and relationships
+- [ ] Generate and apply database migrations
+- [ ] Set up design tokens (colors, typography, spacing) in Tailwind/CSS
+- [ ] Configure global styles and theme (light mode, premium aesthetic)
 
-## Phase 2: Server Status Integration
-- [ ] Integrate Nitrado API for server status
-- [ ] Display player count and server info
-- [ ] Show server uptime/downtime status
-- [ ] Add real-time status updates
-- [ ] Create server info page
+## Phase 2: Landing Page & Authentication
+- [ ] Create landing page with hero section
+- [ ] Add feature highlights section
+- [ ] Implement call-to-action button linking to login
+- [ ] Set up Manus OAuth integration
+- [ ] Create login/logout flow
+- [ ] Add user profile management basics
 
-## Phase 3: Downloads & File Manager
-- [ ] Build downloads page
-- [ ] Integrate GitHub API for mod/resource listings
-- [ ] Integrate CFx.re resource browser
-- [ ] Create file upload/download system
-- [ ] Add file categorization and search
-- [ ] Implement download tracking
+## Phase 3: Pet Management Dashboard
+- [ ] Create dashboard layout with sidebar navigation
+- [ ] Build pet list view showing all user's pets
+- [ ] Implement "Add New Pet" modal/form
+- [ ] Add pet registration form (name, species, breed, age, photo)
+- [ ] Create pet detail view/card
+- [ ] Implement pet editing functionality
+- [ ] Add pet deletion with confirmation
+- [ ] Display pet photo with elegant styling
 
-## Phase 4: Store & Donations (Tebex)
-- [ ] Integrate Tebex API
-- [ ] Display donation packages
-- [ ] Create checkout flow
-- [ ] Show donation history
-- [ ] Add supporter badges/roles
-- [ ] Implement webhook for donation notifications
+## Phase 4: Alert Configuration Panel
+- [ ] Create alert configuration UI for each pet
+- [ ] Build threshold setting interface (temperature, humidity, etc.)
+- [ ] Implement notification preference settings
+- [ ] Add alert type selection (in-app, email, SMS)
+- [ ] Create save/update functionality for alert settings
+- [ ] Display current alert configuration for selected pet
 
-## Phase 5: User Accounts & Community
-- [ ] Create user registration/login
-- [ ] Build user profile pages
-- [ ] Add user roles (member, supporter, admin)
-- [ ] Create community forum/discussion board
-- [ ] Add user statistics and achievements
-- [ ] Implement user authentication
+## Phase 5: Alert History & Real-time Notifications
+- [ ] Create alert history log view
+- [ ] Implement timestamp and severity level display
+- [ ] Build real-time notification system (in-app alerts)
+- [ ] Add notification toast/badge UI
+- [ ] Implement notification dismissal
+- [ ] Create alert history filtering and sorting
+- [ ] Add pagination for alert history
 
-## Phase 6: Admin Dashboard
-- [ ] Create admin panel
-- [ ] Add server management tools
-- [ ] Implement user management
-- [ ] Add donation/revenue tracking
-- [ ] Create content management system
-- [ ] Add analytics and reporting
+## Phase 6: Polish & Testing
+- [ ] Refine typography and spacing across all pages
+- [ ] Ensure consistent color palette and design language
+- [ ] Add micro-interactions and smooth transitions
+- [ ] Test responsive design on mobile/tablet/desktop
+- [ ] Verify all authentication flows work correctly
+- [ ] Test pet management CRUD operations
+- [ ] Validate alert configuration and notification system
+- [ ] Write vitest unit tests for critical features
+- [ ] Performance optimization and accessibility audit
 
-## Phase 7: GitHub Integration
-- [ ] Display latest commits/updates
-- [ ] Show repository statistics
-- [ ] Add changelog viewer
-- [ ] Link to GitHub repository
-- [ ] Display contributor list
-
-## Phase 8: Testing & Optimization
-- [ ] Write vitest tests for all features
-- [ ] Performance optimization
-- [ ] Mobile responsiveness testing
-- [ ] Cross-browser compatibility
-- [ ] Security audit
-
-## Phase 9: Deployment
-- [ ] Configure custom domain (nycgogreenbrandnetwork.us)
-- [ ] Set up SSL certificate
+## Phase 7: Deployment
+- [ ] Create final checkpoint
 - [ ] Deploy to production
-- [ ] Configure DNS records
-- [ ] Final testing and launch
+- [ ] Verify all features work in production
+- [ ] Document setup and usage
+
+## Completed Features
+(Items moved here as they are completed)

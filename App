@@ -1,27 +1,18 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
+import Dashboard from "@/pages/Dashboard";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
-import Contact from "./pages/Contact";
-import Dashboard from "./pages/Dashboard";
-import ResponderPortal from "./pages/ResponderPortal";
-
-import Invest from "./pages/Invest";
-import Careers from "./pages/Careers";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={Home} />
-      <Route path={"/contact"} component={Contact} />
       <Route path={"/dashboard"} component={Dashboard} />
-      <Route path={"/responder"} component={ResponderPortal} />
-      <Route path={"/invest"} component={Invest} />
-      <Route path={"/careers"} component={Careers} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
