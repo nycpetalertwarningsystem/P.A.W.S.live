@@ -1,0 +1,26 @@
+{
+  "version": "1.0",
+  "name": "paws-mcp",
+  "description": "MCP server for PAWS LIVE website",
+  "tools": [
+    {
+      "name": "run_site",
+      "description": "Runs the PAWS LIVE website backend logic",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action": { "type": "string" }
+        },
+        "required": ["action"]
+      }
+    }
+  ],
+  "policies": {
+    "allow": ["run_site"],
+    "deny": []
+  },
+  "server": {
+    "type": "http",
+    "url": "https://YOUR_BACKEND_URL/api/run"
+  }
+}
