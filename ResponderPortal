@@ -1,0 +1,313 @@
+import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { Search, AlertCircle, Heart, Phone, Mail, MapPin } from "lucide-react";
+import { toast } from "sonner";
+
+interface SearchResults {
+  address: string;
+  petsFound: number;
+  pets: any[];
+}
+
+export default function ResponderPortal() {
+  const [searchQuery, setSearchQuery] = useState({
+    address: "",
+    city: "",
+    state: "",
+    zipCode: "",
+  });
+
+  const [responderId] = useState(1); // In production, this would come from auth
+  const [searchResults, setSearchResults] = useState<any>(null);
+
+  const queryMutation = trpc.responder.queryAddress.useMutation({
+    onSuccess: (data: any) => {
+      setSearchResults(data);
+      if (data.petsFound === 0) {
+        toast.info("No pets registered at this address");
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Search failed");
+    },
+  });
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.address || !searchQuery.city || !searchQuery.state || !searchQuery.zipCode) {
+      toast.error("Please fill in all address fields");
+      return;
+    }
+    queryMutation.mutate({
+      ...searchQuery,
+      responderId,
+    });
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setSearchQuery((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="border-b border-gray-200 bg-gradient-to-r from-[#1A1A1A] to-[#333333] py-8 text-white">
+        <div className="container">
+          <div className="mb-2 flex items-center gap-2">
+            <AlertCircle className="h-8 w-8 text-[#FF6B35]" />
+            <h1 className="text-3xl font-bold">911 Emergency Responder Portal</h1>
+          </div>
+          <p className="text-gray-300">
+            Secure access to pet and household emergency information for registered addresses
+          </p>
+        </div>
+      </div>
+
+      {/* Search Section */}
+      <section className="border-b border-gray-200 bg-[#F5F5F5] py-8">
+        <div className="container">
+          <h2 className="mb-6 text-2xl font-bold text-[#1A1A1A]">Search Address</h2>
+
+          <form onSubmit={handleSearch} className="card-paws">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">
+                  Street Address *
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  value={searchQuery.address}
+                  onChange={handleChange}
+                  placeholder="e.g., 123 Main St"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#FF6B35] focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">
+                  City *
+                </label>
+                <input
+                  type="text"
+                  name="city"
+                  value={searchQuery.city}
+                  onChange={handleChange}
+                  placeholder="e.g., New York"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#FF6B35] focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">
+                  State *
+                </label>
+                <input
+                  type="text"
+                  name="state"
+                  value={searchQuery.state}
+                  onChange={handleChange}
+                  placeholder="e.g., NY"
+                  maxLength={2}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#FF6B35] focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">
+                  Zip Code *
+                </label>
+                <input
+                  type="text"
+                  name="zipCode"
+                  value={searchQuery.zipCode}
+                  onChange={handleChange}
+                  placeholder="e.g., 10001"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#FF6B35] focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20"
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={queryMutation.isPending}
+              className="btn-primary mt-6 w-full flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <Search className="h-5 w-5" />
+              {queryMutation.isPending ? "Searching..." : "Search Address"}
+            </button>
+          </form>
+        </div>
+      </section>
+
+      {/* Results Section */}
+      {searchResults && (
+        <section className="py-8">
+          <div className="container">
+            <div className="mb-6 rounded-lg border-2 border-[#FF6B35] bg-[#FF6B35]/5 p-4">
+              <p className="text-sm font-semibold text-[#1A1A1A]">Address</p>
+              <p className="text-lg font-bold text-[#FF6B35]">{searchResults.address}</p>
+              <p className="mt-2 text-sm text-[#333333]">
+                <strong>Pets Found:</strong> {searchResults.petsFound}
+              </p>
+            </div>
+
+            {searchResults.petsFound > 0 ? (
+              <div className="space-y-6">
+                {searchResults.pets && searchResults.pets.length > 0 ? (
+                  searchResults.pets.map((pet: any) => (
+                    <div key={pet.id} className="card-paws border-2 border-[#FF6B35]">
+                      <div className="mb-4 flex items-start justify-between">
+                        <div>
+                          <h3 className="mb-1 text-2xl font-bold text-[#1A1A1A]">{pet.name}</h3>
+                          <p className="text-sm text-[#333333]">
+                            {pet.breed && `${pet.breed} • `}
+                            {pet.age && `Age: ${pet.age} • `}
+                            {pet.color && `Color: ${pet.color}`}
+                          </p>
+                        </div>
+                        <Heart className="h-6 w-6 text-[#FF6B35]" />
+                      </div>
+
+                      {pet.photoUrl && (
+                        <img
+                          src={pet.photoUrl}
+                          alt={pet.name}
+                          className="mb-4 h-48 w-full rounded-lg object-cover"
+                        />
+                      )}
+
+                      {pet.medicalInfo && (
+                        <div className="mb-4 rounded-lg bg-yellow-50 p-4">
+                          <p className="text-sm font-semibold text-yellow-900">Medical Information</p>
+                          <p className="mt-1 text-sm text-yellow-800">{pet.medicalInfo}</p>
+                        </div>
+                      )}
+
+                      {pet.microchipId && (
+                        <p className="mb-4 text-sm text-[#333333]">
+                          <strong>Microchip ID:</strong> {pet.microchipId}
+                        </p>
+                      )}
+
+                      {pet.emergencyContacts && pet.emergencyContacts.length > 0 && (
+                        <div className="mt-4 border-t border-gray-200 pt-4">
+                          <p className="mb-3 font-bold text-[#1A1A1A]">Emergency Contacts</p>
+                          <div className="space-y-3">
+                            {pet.emergencyContacts.map((contact: any) => (
+                              <div key={contact.id} className="rounded-lg bg-[#F5F5F5] p-3">
+                                <p className="font-semibold text-[#1A1A1A]">{contact.contactName}</p>
+                                <p className="text-sm text-[#333333]">
+                                  {contact.relationship}
+                                </p>
+                                <div className="mt-2 flex gap-4">
+                                  <a
+                                    href={`tel:${contact.phone}`}
+                                    className="flex items-center gap-1 text-sm text-[#FF6B35] hover:underline"
+                                  >
+                                    <Phone className="h-4 w-4" />
+                                    {contact.phone}
+                                  </a>
+                                  {contact.email && (
+                                    <a
+                                      href={`mailto:${contact.email}`}
+                                      className="flex items-center gap-1 text-sm text-[#FF6B35] hover:underline"
+                                    >
+                                      <Mail className="h-4 w-4" />
+                                      {contact.email}
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="card-paws text-center">
+                    <p className="text-[#333333]">No pet details available</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="card-paws text-center">
+                <AlertCircle className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                <p className="text-lg font-semibold text-[#1A1A1A]">No Pets Registered</p>
+                <p className="mt-2 text-[#333333]">
+                  No pets are registered at this address in the P.A.W.S. system.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Info Section */}
+      {!searchResults && (
+        <section className="py-12 sm:py-20">
+          <div className="container">
+            <h2 className="mb-8 text-center text-3xl font-bold text-[#1A1A1A]">
+              How This Portal Works
+            </h2>
+
+            <div className="grid gap-8 sm:grid-cols-3">
+              <div className="card-paws text-center">
+                <div className="mb-4 flex justify-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FF6B35]/10">
+                    <Search className="h-6 w-6 text-[#FF6B35]" />
+                  </div>
+                </div>
+                <h3 className="mb-2 font-bold text-[#1A1A1A]">Search Address</h3>
+                <p className="text-sm text-[#333333]">
+                  Enter the emergency address to query the P.A.W.S. database
+                </p>
+              </div>
+
+              <div className="card-paws text-center">
+                <div className="mb-4 flex justify-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FF6B35]/10">
+                    <Heart className="h-6 w-6 text-[#FF6B35]" />
+                  </div>
+                </div>
+                <h3 className="mb-2 font-bold text-[#1A1A1A]">View Pet Data</h3>
+                <p className="text-sm text-[#333333]">
+                  Instantly access all registered pets and their emergency information
+                </p>
+              </div>
+
+              <div className="card-paws text-center">
+                <div className="mb-4 flex justify-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FF6B35]/10">
+                    <AlertCircle className="h-6 w-6 text-[#FF6B35]" />
+                  </div>
+                </div>
+                <h3 className="mb-2 font-bold text-[#1A1A1A]">Emergency Response</h3>
+                <p className="text-sm text-[#333333]">
+                  Use pet information to provide better emergency care and response
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-12 rounded-lg border-2 border-yellow-300 bg-yellow-50 p-6">
+              <p className="text-sm font-semibold text-yellow-900">Security Notice</p>
+              <p className="mt-2 text-sm text-yellow-800">
+                All access to this portal is logged and monitored for compliance and security purposes.
+                This system is restricted to authorized emergency responders only.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}

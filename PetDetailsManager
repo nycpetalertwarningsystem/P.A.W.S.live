@@ -1,0 +1,300 @@
+import { trpc } from "@/lib/trpc";
+import { useState } from "react";
+import { Plus, Trash2, Edit2 } from "lucide-react";
+import { toast } from "sonner";
+
+interface PetDetailsManagerProps {
+  petId: number;
+  petName: string;
+}
+
+export function PetDetailsManager({ petId, petName }: PetDetailsManagerProps) {
+  const [activeTab, setActiveTab] = useState<"medical" | "social" | "contacts">("medical");
+  const [showForm, setShowForm] = useState(false);
+
+  // Medical History
+  const medicalQuery = trpc.petMedical.getHistory.useQuery({ petId });
+  const addMedicalMutation = trpc.petMedical.addEntry.useMutation({
+    onSuccess: () => {
+      toast.success("Medical entry added!");
+      medicalQuery.refetch();
+      setShowForm(false);
+    },
+  });
+  const deleteMedicalMutation = trpc.petMedical.deleteEntry.useMutation({
+    onSuccess: () => {
+      toast.success("Medical entry deleted");
+      medicalQuery.refetch();
+    },
+  });
+
+  // Social Challenges
+  const socialQuery = trpc.petSocial.getChallenges.useQuery({ petId });
+  const addSocialMutation = trpc.petSocial.addChallenge.useMutation({
+    onSuccess: () => {
+      toast.success("Challenge documented!");
+      socialQuery.refetch();
+      setShowForm(false);
+    },
+  });
+  const deleteSocialMutation = trpc.petSocial.deleteChallenge.useMutation({
+    onSuccess: () => {
+      toast.success("Challenge removed");
+      socialQuery.refetch();
+    },
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2 border-b border-gray-200">
+        <button
+          onClick={() => setActiveTab("medical")}
+          className={`px-4 py-2 font-semibold transition ${
+            activeTab === "medical"
+              ? "border-b-2 border-[#FF6B35] text-[#FF6B35]"
+              : "text-[#333333] hover:text-[#FF6B35]"
+          }`}
+        >
+          Medical History
+        </button>
+        <button
+          onClick={() => setActiveTab("social")}
+          className={`px-4 py-2 font-semibold transition ${
+            activeTab === "social"
+              ? "border-b-2 border-[#FF6B35] text-[#FF6B35]"
+              : "text-[#333333] hover:text-[#FF6B35]"
+          }`}
+        >
+          Social Challenges
+        </button>
+      </div>
+
+      {/* Medical History Tab */}
+      {activeTab === "medical" && (
+        <div>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-bold text-[#1A1A1A]">Medical History</h3>
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="btn-primary flex items-center gap-2 text-sm"
+            >
+              <Plus className="h-4 w-4" />
+              Add Entry
+            </button>
+          </div>
+
+          {showForm && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                addMedicalMutation.mutate({
+                  petId,
+                  entryType: formData.get("entryType") as any,
+                  title: formData.get("title") as string,
+                  description: formData.get("description") as string,
+                });
+              }}
+              className="card-paws mb-4 border-2 border-[#FF6B35]"
+            >
+              <select
+                name="entryType"
+                required
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 mb-3"
+              >
+                <option value="">Select Type</option>
+                <option value="medication">Medication</option>
+                <option value="allergy">Allergy</option>
+                <option value="condition">Condition</option>
+                <option value="surgery">Surgery</option>
+                <option value="vaccination">Vaccination</option>
+                <option value="visit">Vet Visit</option>
+              </select>
+
+              <input
+                type="text"
+                name="title"
+                placeholder="Title"
+                required
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 mb-3"
+              />
+
+              <textarea
+                name="description"
+                placeholder="Description (optional)"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 mb-3"
+                rows={3}
+              />
+
+              <div className="flex gap-2">
+                <button type="submit" className="btn-primary flex-1">
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="btn-outline flex-1"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+
+          {medicalQuery.isLoading ? (
+            <p className="text-[#333333]">Loading...</p>
+          ) : medicalQuery.data && medicalQuery.data.length > 0 ? (
+            <div className="space-y-3">
+              {medicalQuery.data.map((entry) => (
+                <div key={entry.id} className="card-paws">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-semibold text-[#1A1A1A] capitalize">{entry.entryType}</p>
+                      <p className="text-sm text-[#333333]">{entry.title}</p>
+                      {entry.description && (
+                        <p className="text-xs text-[#666666] mt-1">{entry.description}</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => deleteMedicalMutation.mutate({ entryId: entry.id })}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[#333333]">No medical history yet.</p>
+          )}
+        </div>
+      )}
+
+      {/* Social Challenges Tab */}
+      {activeTab === "social" && (
+        <div>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-bold text-[#1A1A1A]">Behavioral Challenges</h3>
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="btn-primary flex items-center gap-2 text-sm"
+            >
+              <Plus className="h-4 w-4" />
+              Add Challenge
+            </button>
+          </div>
+
+          {showForm && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                addSocialMutation.mutate({
+                  petId,
+                  challengeType: formData.get("challengeType") as any,
+                  description: formData.get("description") as string,
+                  triggers: formData.get("triggers") as string,
+                  managementTips: formData.get("managementTips") as string,
+                  severity: formData.get("severity") as any,
+                });
+              }}
+              className="card-paws mb-4 border-2 border-[#FF6B35]"
+            >
+              <select
+                name="challengeType"
+                required
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 mb-3"
+              >
+                <option value="">Select Challenge Type</option>
+                <option value="anxiety">Anxiety</option>
+                <option value="aggression">Aggression</option>
+                <option value="fear">Fear</option>
+                <option value="reactivity">Reactivity</option>
+                <option value="separation_anxiety">Separation Anxiety</option>
+                <option value="other">Other</option>
+              </select>
+
+              <select
+                name="severity"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 mb-3"
+              >
+                <option value="mild">Mild</option>
+                <option value="moderate">Moderate</option>
+                <option value="severe">Severe</option>
+              </select>
+
+              <textarea
+                name="description"
+                placeholder="Description"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 mb-3"
+                rows={2}
+              />
+
+              <textarea
+                name="triggers"
+                placeholder="What triggers this behavior?"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 mb-3"
+                rows={2}
+              />
+
+              <textarea
+                name="managementTips"
+                placeholder="How to manage it"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 mb-3"
+                rows={2}
+              />
+
+              <div className="flex gap-2">
+                <button type="submit" className="btn-primary flex-1">
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="btn-outline flex-1"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+
+          {socialQuery.isLoading ? (
+            <p className="text-[#333333]">Loading...</p>
+          ) : socialQuery.data && socialQuery.data.length > 0 ? (
+            <div className="space-y-3">
+              {socialQuery.data.map((challenge) => (
+                <div key={challenge.id} className="card-paws">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-semibold text-[#1A1A1A] capitalize">{challenge.challengeType}</p>
+                      <p className="text-xs text-[#FF6B35] font-semibold capitalize mb-1">{challenge.severity}</p>
+                      {challenge.description && (
+                        <p className="text-sm text-[#333333]">{challenge.description}</p>
+                      )}
+                      {challenge.triggers && (
+                        <p className="text-xs text-[#666666] mt-1"><strong>Triggers:</strong> {challenge.triggers}</p>
+                      )}
+                      {challenge.managementTips && (
+                        <p className="text-xs text-[#666666] mt-1"><strong>Management:</strong> {challenge.managementTips}</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => deleteSocialMutation.mutate({ challengeId: challenge.id })}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[#333333]">No behavioral challenges documented yet.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

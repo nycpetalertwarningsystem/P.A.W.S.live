@@ -1,0 +1,1 @@
+DROP INDEX `address_idx` ON `users`;

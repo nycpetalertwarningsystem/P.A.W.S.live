@@ -1,0 +1,58 @@
+P.A.W.S. (Pet Alert Warning System) - DEPLOYMENT INFORMATION
+==============================================================
+
+CURRENT DEV SERVER URL:
+https://3000-i755snvn7nbqee81kgikg-243118cc.us2.manus.computer
+
+YOUR DOMAIN:
+petalertwarningsystem.theworkpc.com
+
+DNS SETUP INSTRUCTIONS:
+1. Log into Dynu.com
+2. Go to DNS Management for theworkpc.com
+3. Create a CNAME record for petalertwarningsystem pointing to the dev server URL above
+4. Configure Cloudflare as your nameservice provider
+5. Enable DDoS protection in Cloudflare
+
+NEXT STEPS:
+1. Complete remaining features (photo uploads, checkout, responder verification)
+2. Test all functionality
+3. Click "Publish" button in Manus Management UI to get permanent deployment URL
+4. Update DNS with permanent URL
+5. Go live on your domain
+
+FEATURES COMPLETED:
+✓ Landing page with hero section
+✓ About section
+✓ Services section
+✓ Contact page with inquiry forms
+✓ User dashboard for pet management
+✓ Emergency Responder Portal
+✓ Database schema with all tables
+✓ Backend API procedures
+✓ Orange and black brand styling
+✓ Mobile-first responsive design
+
+FEATURES IN PROGRESS:
+- Investment/Funding page with GoFundMe link and video
+- Photo upload functionality
+- Emergency contact management
+- Subscription checkout
+- Responder account verification
+- Access logging for compliance
+
+CONTACT FOR INVESTMENT INQUIRIES:
+[Your email address needed]
+
+GOFUNDME LINK:
+gofund.me/6a40859ac
+
+PROJECT PATH:
+/home/ubuntu/petalert-warning-system
+
+DATABASE:
+MySQL/TiDB with Drizzle ORM
+Tables: users, pets, subscriptions, emergencyContacts, responderAccessLogs
+
+STORAGE:
+S3 integration ready for pet photos and documents

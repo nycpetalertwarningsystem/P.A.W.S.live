@@ -1,0 +1,549 @@
+import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
+import { useLocation } from "wouter";
+import { Plus, Edit2, Trash2, LogOut, Settings, Heart } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { SubscriptionSelector } from "@/components/SubscriptionSelector";
+import { PaymentHistory } from "@/components/PaymentHistory";
+
+export default function Dashboard() {
+  const { user, logout } = useAuth();
+  const [, setLocation] = useLocation();
+  const [activeTab, setActiveTab] = useState<"pets" | "profile" | "subscription">("pets");
+  const [showPetForm, setShowPetForm] = useState(false);
+  const [editingPetId, setEditingPetId] = useState<number | null>(null);
+
+  // Queries
+  const petsQuery = trpc.pets.list.useQuery();
+  const profileQuery = trpc.users.getProfile.useQuery();
+  const subscriptionQuery = trpc.subscriptions.getActive.useQuery();
+  const membershipStatusQuery = trpc.membership.getStatus.useQuery();
+
+  // Mutations
+  const updateProfileMutation = trpc.users.updateProfile.useMutation({
+    onSuccess: () => {
+      toast.success("Profile updated!");
+      profileQuery.refetch();
+    },
+  });
+
+  const deletePetMutation = trpc.pets.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Pet deleted");
+      petsQuery.refetch();
+    },
+  });
+
+  const recordSignupMutation = trpc.membership.recordSignup.useMutation({
+    onSuccess: (data) => {
+      if (data.isFree) {
+        toast.success("🎉 You got FREE lifetime membership!");
+      } else {
+        toast.info("Standard membership activated");
+      }
+      membershipStatusQuery.refetch();
+    },
+  });
+
+  const handleLogout = async () => {
+    await logout();
+    setLocation("/");
+  };
+
+  if (!user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-[#333333]">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#F5F5F5]">
+      {/* Membership Offer Banner */}
+      {membershipStatusQuery.data?.isFreeAvailable && (
+        <div className="bg-gradient-to-r from-[#FF6B35] to-[#E55A24] text-white py-3">
+          <div className="container text-center text-sm font-semibold">
+            ⏰ Only {membershipStatusQuery.data?.remainingSlots} free memberships left! Join now to get lifetime free access.
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="border-b border-gray-200 bg-white">
+        <div className="container flex items-center justify-between py-4">
+          <div className="flex items-center gap-2">
+            <img src="/manus-storage/paws_logo_a79b277d.png" alt="P.A.W.S." className="h-10 w-10" />
+            <span className="text-xl font-bold text-[#1A1A1A]">P.A.W.S. Dashboard</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-[#333333]">{user.name || user.email}</span>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 text-[#FF6B35] hover:text-[#E55A24] transition"
+              title="Logout"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="container py-8">
+        <div className="grid gap-8 lg:grid-cols-4">
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="card-paws sticky top-4 space-y-2">
+              <button
+                onClick={() => {
+                  setActiveTab("pets");
+                  setShowPetForm(false);
+                }}
+                className={`w-full rounded-lg px-4 py-3 text-left font-semibold transition ${
+                  activeTab === "pets"
+                    ? "bg-[#FF6B35] text-white"
+                    : "text-[#1A1A1A] hover:bg-[#F5F5F5]"
+                }`}
+              >
+                <Heart className="mb-1 inline-block h-5 w-5 mr-2" />
+                My Pets
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab("profile");
+                  setShowPetForm(false);
+                }}
+                className={`w-full rounded-lg px-4 py-3 text-left font-semibold transition ${
+                  activeTab === "profile"
+                    ? "bg-[#FF6B35] text-white"
+                    : "text-[#1A1A1A] hover:bg-[#F5F5F5]"
+                }`}
+              >
+                <Settings className="mb-1 inline-block h-5 w-5 mr-2" />
+                Profile
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab("subscription");
+                  setShowPetForm(false);
+                }}
+                className={`w-full rounded-lg px-4 py-3 text-left font-semibold transition ${
+                  activeTab === "subscription"
+                    ? "bg-[#FF6B35] text-white"
+                    : "text-[#1A1A1A] hover:bg-[#F5F5F5]"
+                }`}
+              >
+                <Heart className="mb-1 inline-block h-5 w-5 mr-2" />
+                Subscription
+              </button>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="lg:col-span-3">
+            {/* Pets Tab */}
+            {activeTab === "pets" && (
+              <div>
+                <div className="mb-6 flex items-center justify-between">
+                  <h2 className="text-3xl font-bold text-[#1A1A1A]">My Pets</h2>
+                  <button
+                    onClick={() => setShowPetForm(!showPetForm)}
+                    className="btn-primary flex items-center gap-2"
+                  >
+                    <Plus className="h-5 w-5" />
+                    {showPetForm ? "Cancel" : "Add Pet"}
+                  </button>
+                </div>
+
+                {showPetForm && (
+                  <div className="card-paws mb-6 border-2 border-[#FF6B35]">
+                    <h3 className="mb-4 text-xl font-bold text-[#1A1A1A]">Add New Pet</h3>
+                    <PetForm onSuccess={() => setShowPetForm(false)} />
+                  </div>
+                )}
+
+                {petsQuery.isLoading ? (
+                  <div className="text-center text-[#333333]">Loading pets...</div>
+                ) : petsQuery.data && petsQuery.data.length > 0 ? (
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    {petsQuery.data.map((pet) => (
+                      <div key={pet.id} className="card-paws">
+                        {pet.photoUrl && (
+                          <img
+                            src={pet.photoUrl}
+                            alt={pet.name}
+                            className="mb-4 h-40 w-full rounded-lg object-cover"
+                          />
+                        )}
+                        <h3 className="mb-2 text-xl font-bold text-[#1A1A1A]">{pet.name}</h3>
+                        <p className="mb-1 text-sm text-[#333333]">
+                          <strong>Breed:</strong> {pet.breed || "Not specified"}
+                        </p>
+                        <p className="mb-1 text-sm text-[#333333]">
+                          <strong>Age:</strong> {pet.age || "Not specified"}
+                        </p>
+                        {pet.medicalInfo && (
+                          <p className="mb-4 text-sm text-[#333333]">
+                            <strong>Medical Info:</strong> {pet.medicalInfo}
+                          </p>
+                        )}
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => {
+                              setEditingPetId(editingPetId === pet.id ? null : pet.id);
+                              toast.info("Edit feature coming soon!");
+                            }}
+                            className="flex-1 btn-outline text-sm flex items-center justify-center gap-2"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Delete ${pet.name}?`)) {
+                                deletePetMutation.mutate({ petId: pet.id });
+                              }
+                            }}
+                            className="flex-1 rounded-lg border-2 border-red-500 bg-transparent px-4 py-2 text-sm font-semibold text-red-500 transition hover:bg-red-500 hover:text-white"
+                          >
+                            <Trash2 className="inline-block h-4 w-4 mr-1" />
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="card-paws text-center">
+                    <p className="text-[#333333]">No pets yet. Add your first pet to get started!</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Profile Tab */}
+            {activeTab === "profile" && (
+              <div>
+                <h2 className="mb-6 text-3xl font-bold text-[#1A1A1A]">My Profile</h2>
+                {profileQuery.isLoading ? (
+                  <div className="text-center text-[#333333]">Loading profile...</div>
+                ) : (
+                  <div className="card-paws">
+                    <ProfileForm user={profileQuery.data} mutation={updateProfileMutation} />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Subscription Tab */}
+            {activeTab === "subscription" && (
+              <div>
+                <h2 className="mb-6 text-3xl font-bold text-[#1A1A1A]">Subscription</h2>
+                {subscriptionQuery.isLoading ? (
+                  <div className="text-center text-[#333333]">Loading subscription...</div>
+                ) : subscriptionQuery.data ? (
+                  <div className="card-paws">
+                    <div className="mb-4">
+                      <p className="text-sm text-[#333333]">Current Plan</p>
+                      <p className="text-3xl font-bold text-[#FF6B35] capitalize">
+                        {subscriptionQuery.data.planType}
+                      </p>
+                    </div>
+                    <div className="mb-4">
+                      <p className="text-sm text-[#333333]">Status</p>
+                      <p className="text-lg font-semibold text-[#1A1A1A] capitalize">
+                        {subscriptionQuery.data.status}
+                      </p>
+                    </div>
+                    <div className="mb-4">
+                      <p className="text-sm text-[#333333]">Renewal Date</p>
+                      <p className="text-lg font-semibold text-[#1A1A1A]">
+                        {new Date(subscriptionQuery.data.renewalDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p className="text-sm text-blue-900">✅ Your subscription is active and will renew on {new Date(subscriptionQuery.data.renewalDate).toLocaleDateString()}</p>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          const confirmed = confirm("Are you sure you want to cancel your subscription? You will lose access to premium features.");
+                          if (confirmed) {
+                            toast.success("Subscription cancellation requested. Please contact support to complete.");
+                          }
+                        }}
+                        className="w-full rounded-lg border-2 border-red-500 bg-transparent px-4 py-2 text-sm font-semibold text-red-500 transition hover:bg-red-500 hover:text-white"
+                      >
+                        Cancel Subscription
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <SubscriptionSelector onSuccess={() => subscriptionQuery.refetch()} />
+                  </div>
+                )}
+                
+                {/* Payment History */}
+                <div className="mt-8">
+                  <PaymentHistory />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Pet Form Component
+ */
+function PetForm({ onSuccess }: { onSuccess: () => void }) {
+  const [formData, setFormData] = useState({
+    name: "",
+    breed: "",
+    age: "",
+    color: "",
+    medicalInfo: "",
+  });
+
+  const createMutation = trpc.pets.create.useMutation({
+    onSuccess: () => {
+      toast.success("Pet added successfully!");
+      setFormData({ name: "", breed: "", age: "", color: "", medicalInfo: "" });
+      onSuccess();
+    },
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name) {
+      toast.error("Pet name is required");
+      return;
+    }
+    createMutation.mutate({
+      name: formData.name,
+      breed: formData.breed || undefined,
+      age: formData.age ? parseInt(formData.age) : undefined,
+      color: formData.color || undefined,
+      medicalInfo: formData.medicalInfo || undefined,
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">Pet Name *</label>
+        <input
+          type="text"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          placeholder="e.g., Max"
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#FF6B35] focus:outline-none"
+          required
+        />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">Breed</label>
+          <input
+            type="text"
+            name="breed"
+            value={formData.breed}
+            onChange={handleChange}
+            placeholder="e.g., Golden Retriever"
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#FF6B35] focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">Age</label>
+          <input
+            type="number"
+            name="age"
+            value={formData.age}
+            onChange={handleChange}
+            placeholder="e.g., 5"
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#FF6B35] focus:outline-none"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">Color</label>
+        <input
+          type="text"
+          name="color"
+          value={formData.color}
+          onChange={handleChange}
+          placeholder="e.g., Brown and white"
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#FF6B35] focus:outline-none"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">Medical Information</label>
+        <textarea
+          name="medicalInfo"
+          value={formData.medicalInfo}
+          onChange={handleChange}
+          placeholder="e.g., Allergies, medications, conditions"
+          rows={3}
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#FF6B35] focus:outline-none"
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={createMutation.isPending}
+        className="btn-primary w-full disabled:opacity-50"
+      >
+        {createMutation.isPending ? "Adding..." : "Add Pet"}
+      </button>
+    </form>
+  );
+}
+
+/**
+ * Profile Form Component
+ */
+function ProfileForm({
+  user,
+  mutation,
+}: {
+  user: any;
+  mutation: any;
+}) {
+  const [formData, setFormData] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    address: user?.address || "",
+    city: user?.city || "",
+    state: user?.state || "",
+    zipCode: user?.zipCode || "",
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    mutation.mutate(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">Name</label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#FF6B35] focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">Email</label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#FF6B35] focus:outline-none"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">Phone</label>
+        <input
+          type="tel"
+          name="phone"
+          value={formData.phone}
+          onChange={handleChange}
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#FF6B35] focus:outline-none"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">Address</label>
+        <input
+          type="text"
+          name="address"
+          value={formData.address}
+          onChange={handleChange}
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#FF6B35] focus:outline-none"
+        />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div>
+          <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">City</label>
+          <input
+            type="text"
+            name="city"
+            value={formData.city}
+            onChange={handleChange}
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#FF6B35] focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">State</label>
+          <input
+            type="text"
+            name="state"
+            value={formData.state}
+            onChange={handleChange}
+            maxLength={2}
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#FF6B35] focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">Zip Code</label>
+          <input
+            type="text"
+            name="zipCode"
+            value={formData.zipCode}
+            onChange={handleChange}
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#FF6B35] focus:outline-none"
+          />
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        disabled={mutation.isPending}
+        className="btn-primary w-full disabled:opacity-50"
+      >
+        {mutation.isPending ? "Saving..." : "Save Profile"}
+      </button>
+    </form>
+  );
+}

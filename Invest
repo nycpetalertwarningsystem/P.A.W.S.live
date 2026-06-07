@@ -1,0 +1,430 @@
+import { useAuth } from "@/_core/hooks/useAuth";
+import { Heart, Zap, Users, TrendingUp, Lock, FileText, Key } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
+
+export default function Invest() {
+  const { user, isAuthenticated } = useAuth();
+  const [location] = useLocation();
+  const [hasNdaSigned, setHasNdaSigned] = useState(false);
+  const [accessCode, setAccessCode] = useState("");
+  const [showAccessForm, setShowAccessForm] = useState(false);
+  const [accessError, setAccessError] = useState("");
+  const [accessSuccess, setAccessSuccess] = useState(false);
+
+  // Check if user has access to investor portal
+  const { data: hasAccess, isLoading: checkingAccess } = trpc.investor.checkAccess.useQuery(
+    undefined,
+    { enabled: isAuthenticated }
+  );
+
+  // Sign NDA mutation
+  const signNdaMutation = trpc.investor.signNda.useMutation({
+    onSuccess: () => {
+      setHasNdaSigned(true);
+      setShowAccessForm(true);
+    },
+  });
+
+  // Verify access code mutation
+  const verifyAccessMutation = trpc.investor.verifyAccessCode.useMutation({
+    onSuccess: () => {
+      setAccessSuccess(true);
+      setAccessError("");
+      // Refresh access check
+      setTimeout(() => window.location.reload(), 1500);
+    },
+    onError: (error) => {
+      setAccessError(error.message || "Invalid access code");
+    },
+  });
+
+  // If not authenticated, show login prompt
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-white">
+        {/* Navigation */}
+        <nav className="sticky top-0 z-50 border-b border-gray-200 bg-white">
+          <div className="container flex items-center justify-between py-4">
+            <div className="flex items-center gap-2">
+              <img src="/manus-storage/paws_logo_a79b277d.png" alt="P.A.W.S." className="h-10 w-10" />
+              <span className="text-xl font-bold text-[#1A1A1A]">P.A.W.S.</span>
+            </div>
+            <div className="hidden gap-8 md:flex">
+              <Link href="/" className="text-[#1A1A1A] hover:text-[#FF6B35] transition">
+                Home
+              </Link>
+              <a href="/#about" className="text-[#1A1A1A] hover:text-[#FF6B35] transition">
+                About
+              </a>
+              <a href="/#services" className="text-[#1A1A1A] hover:text-[#FF6B35] transition">
+                Services
+              </a>
+              <Link href="/contact" className="text-[#1A1A1A] hover:text-[#FF6B35] transition">
+                Contact
+              </Link>
+            </div>
+            <div className="hidden gap-4 md:flex">
+              <Link href="/" className="btn-primary">
+                Sign In
+              </Link>
+            </div>
+          </div>
+        </nav>
+
+        {/* Locked Section */}
+        <section className="min-h-screen bg-gradient-to-br from-[#FF6B35] to-[#E55A24] py-20 text-white flex items-center">
+          <div className="container text-center">
+            <Lock className="h-20 w-20 mx-auto mb-6 text-white" />
+            <h1 className="mb-4 text-4xl font-bold">Investor Portal</h1>
+            <p className="mb-8 text-lg text-white/90">
+              This page is restricted to authorized investors only.
+            </p>
+            <p className="mb-8 text-white/80">
+              Please sign in with your account to access the investor information.
+            </p>
+            <Link href="/" className="btn-secondary bg-white text-[#FF6B35] hover:bg-gray-100">
+              Sign In to Continue
+            </Link>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // If authenticated but no access, show NDA and access code form
+  if (!hasAccess && !checkingAccess) {
+    return (
+      <div className="min-h-screen bg-white">
+        {/* Navigation */}
+        <nav className="sticky top-0 z-50 border-b border-gray-200 bg-white">
+          <div className="container flex items-center justify-between py-4">
+            <div className="flex items-center gap-2">
+              <img src="/manus-storage/paws_logo_a79b277d.png" alt="P.A.W.S." className="h-10 w-10" />
+              <span className="text-xl font-bold text-[#1A1A1A]">P.A.W.S.</span>
+            </div>
+            <div className="hidden gap-8 md:flex">
+              <Link href="/" className="text-[#1A1A1A] hover:text-[#FF6B35] transition">
+                Home
+              </Link>
+              <Link href="/dashboard" className="btn-primary">
+                Dashboard
+              </Link>
+            </div>
+          </div>
+        </nav>
+
+        {/* Access Gate */}
+        <section className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-20">
+          <div className="container">
+            <div className="mx-auto max-w-2xl rounded-xl bg-white p-8 shadow-lg">
+              <div className="mb-8 text-center">
+                <Lock className="h-16 w-16 mx-auto mb-4 text-[#FF6B35]" />
+                <h1 className="mb-2 text-3xl font-bold text-[#1A1A1A]">Investor Portal Access</h1>
+                <p className="text-[#333333]">
+                  To access confidential investor information, please complete the following steps:
+                </p>
+              </div>
+
+              {/* Step 1: Sign NDA */}
+              <div className="mb-8 p-6 border-2 border-[#FF6B35] rounded-lg">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="h-8 w-8 rounded-full bg-[#FF6B35] text-white flex items-center justify-center font-bold flex-shrink-0">
+                    1
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold text-[#1A1A1A] mb-2 flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Sign Non-Disclosure Agreement
+                    </h2>
+                    <p className="text-[#333333] mb-4">
+                      Review and digitally sign our NDA to protect P.A.W.S. confidential business information.
+                    </p>
+                    {!hasNdaSigned ? (
+                      <button
+                        onClick={() => signNdaMutation.mutate()}
+                        disabled={signNdaMutation.isPending}
+                        className="btn-primary bg-[#FF6B35] hover:bg-[#E55A24]"
+                      >
+                        {signNdaMutation.isPending ? "Processing..." : "Sign NDA"}
+                      </button>
+                    ) : (
+                      <div className="text-green-600 font-semibold flex items-center gap-2">
+                        ✓ NDA Signed
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 2: Enter Access Code */}
+              {hasNdaSigned && (
+                <div className="p-6 border-2 border-[#FF6B35] rounded-lg">
+                  <div className="flex items-start gap-4">
+                    <div className="h-8 w-8 rounded-full bg-[#FF6B35] text-white flex items-center justify-center font-bold flex-shrink-0">
+                      2
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="text-xl font-bold text-[#1A1A1A] mb-2 flex items-center gap-2">
+                        <Key className="h-5 w-5" />
+                        Enter Access Code
+                      </h2>
+                      <p className="text-[#333333] mb-4">
+                        Enter the access code provided by the P.A.W.S. team to gain access to investor materials.
+                      </p>
+
+                      {accessSuccess ? (
+                        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 font-semibold">
+                          ✓ Access Granted! Redirecting...
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <input
+                            type="text"
+                            placeholder="Enter access code"
+                            value={accessCode}
+                            onChange={(e) => {
+                              setAccessCode(e.target.value);
+                              setAccessError("");
+                            }}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#FF6B35]"
+                          />
+                          {accessError && (
+                            <p className="text-red-600 text-sm">{accessError}</p>
+                          )}
+                          <button
+                            onClick={() => verifyAccessMutation.mutate({ code: accessCode })}
+                            disabled={verifyAccessMutation.isPending || !accessCode}
+                            className="btn-primary bg-[#FF6B35] hover:bg-[#E55A24] w-full"
+                          >
+                            {verifyAccessMutation.isPending ? "Verifying..." : "Verify Access Code"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <p className="mt-8 text-center text-sm text-[#333333]">
+                Don't have an access code? Contact us at{" "}
+                <a
+                  href="mailto:paws_petrescue@nycgogreentours.net"
+                  className="text-[#FF6B35] hover:underline font-semibold"
+                >
+                  paws_petrescue@nycgogreentours.net
+                </a>
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // If has access, show investor portal
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Navigation */}
+      <nav className="sticky top-0 z-50 border-b border-gray-200 bg-white">
+        <div className="container flex items-center justify-between py-4">
+          <div className="flex items-center gap-2">
+            <img src="/manus-storage/paws_logo_a79b277d.png" alt="P.A.W.S." className="h-10 w-10" />
+            <span className="text-xl font-bold text-[#1A1A1A]">P.A.W.S.</span>
+          </div>
+
+          <div className="hidden gap-8 md:flex">
+            <Link href="/" className="text-[#1A1A1A] hover:text-[#FF6B35] transition">
+              Home
+            </Link>
+            <a href="/#about" className="text-[#1A1A1A] hover:text-[#FF6B35] transition">
+              About
+            </a>
+            <a href="/#services" className="text-[#1A1A1A] hover:text-[#FF6B35] transition">
+              Services
+            </a>
+            <Link href="/contact" className="text-[#1A1A1A] hover:text-[#FF6B35] transition">
+              Contact
+            </Link>
+          </div>
+
+          <div className="hidden gap-4 md:flex">
+            <Link href="/dashboard" className="btn-primary">
+              Dashboard
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-[#FF6B35] to-[#E55A24] py-12 sm:py-20 lg:py-32 text-white">
+        <div className="container">
+          <div className="mb-8 text-center">
+            <h1 className="mb-4 text-4xl font-bold sm:text-5xl">
+              Help Us Save Millions of Pets
+            </h1>
+            <p className="text-lg text-white/90">
+              P.A.W.S. is seeking seed funding to launch nationally and protect pets across America
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Investor Video Section */}
+      <section className="py-12 sm:py-20 lg:py-32">
+        <div className="container">
+          <div className="mb-12 text-center">
+            <h2 className="mb-4 text-3xl font-bold text-[#1A1A1A]">Our Vision</h2>
+            <p className="text-lg text-[#333333]">
+              Watch how P.A.W.S. is changing pet safety and emergency response
+            </p>
+          </div>
+
+          {/* Video Player */}
+          <div className="mx-auto max-w-4xl rounded-xl overflow-hidden shadow-2xl mb-12">
+            <video
+              width="100%"
+              height="600"
+              controls
+              className="w-full"
+              poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'%3E%3Crect fill='%23FF6B35' width='1280' height='720'/%3E%3C/svg%3E"
+            >
+              <source src="/manus-storage/270_820af0db.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+
+          {/* Impact Stats */}
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 mb-12">
+            <div className="card-paws text-center">
+              <Heart className="h-12 w-12 text-[#FF6B35] mx-auto mb-4" />
+              <p className="text-3xl font-bold text-[#1A1A1A]">20+</p>
+              <p className="text-[#333333]">Animals Rescued (2025)</p>
+            </div>
+            <div className="card-paws text-center">
+              <Zap className="h-12 w-12 text-[#FF6B35] mx-auto mb-4" />
+              <p className="text-3xl font-bold text-[#1A1A1A]">50+</p>
+              <p className="text-[#333333]">Monthly Inquiries</p>
+            </div>
+            <div className="card-paws text-center">
+              <Users className="h-12 w-12 text-[#FF6B35] mx-auto mb-4" />
+              <p className="text-3xl font-bold text-[#1A1A1A]">3.2M</p>
+              <p className="text-[#333333]">Pets in NYC</p>
+            </div>
+            <div className="card-paws text-center">
+              <TrendingUp className="h-12 w-12 text-[#FF6B35] mx-auto mb-4" />
+              <p className="text-3xl font-bold text-[#1A1A1A]">25+</p>
+              <p className="text-[#333333]">Cities Target</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Funding Goal Section */}
+      <section className="bg-[#F5F5F5] py-12 sm:py-20 lg:py-32">
+        <div className="container">
+          <div className="mb-12 text-center">
+            <h2 className="mb-4 text-3xl font-bold text-[#1A1A1A]">Seed Funding Goal</h2>
+            <p className="text-lg text-[#333333]">
+              We're seeking seed capital to accelerate our mission
+            </p>
+          </div>
+
+          <div className="mx-auto max-w-2xl">
+            <div className="rounded-xl bg-white p-8 shadow-lg">
+              <div className="mb-6 text-center">
+                <p className="text-sm font-semibold text-[#FF6B35] mb-2">FUNDING TARGET</p>
+                <p className="text-5xl font-bold text-[#1A1A1A]">Seed Capital</p>
+              </div>
+
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start gap-4">
+                  <div className="h-8 w-8 rounded-full bg-[#FF6B35] text-white flex items-center justify-center font-bold flex-shrink-0">
+                    1
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-[#1A1A1A]">Launch Phase</h3>
+                    <p className="text-[#333333]">Build database and onboard first 10,000 pet owners</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="h-8 w-8 rounded-full bg-[#FF6B35] text-white flex items-center justify-center font-bold flex-shrink-0">
+                    2
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-[#1A1A1A]">Scale Phase</h3>
+                    <p className="text-[#333333]">Expand to 25 major cities nationwide</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="h-8 w-8 rounded-full bg-[#FF6B35] text-white flex items-center justify-center font-bold flex-shrink-0">
+                    3
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-[#1A1A1A]">Revenue Model</h3>
+                    <p className="text-[#333333]">Emergency responder access as premium service</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="space-y-4">
+                <a
+                  href="https://gofund.me/6a40859ac"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary w-full text-center block"
+                >
+                  Support on GoFundMe
+                </a>
+                <a
+                  href="mailto:paws_petrescue@nycgogreentours.net?subject=Investment%20Inquiry%20-%20P.A.W.S."
+                  className="btn-secondary w-full text-center block"
+                >
+                  Contact for Investment Inquiry
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="bg-[#1A1A1A] py-12 sm:py-20 lg:py-32 text-white">
+        <div className="container text-center">
+          <h2 className="mb-4 text-4xl font-bold sm:text-5xl">
+            Join Us in Saving Lives
+          </h2>
+          <p className="mb-8 text-lg text-gray-300">
+            Together, we can build the infrastructure that protects millions of pets
+          </p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+            <a
+              href="https://gofund.me/6a40859ac"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary bg-[#FF6B35] hover:bg-[#E55A24]"
+            >
+              Contribute Now
+            </a>
+            <a
+              href="mailto:paws_petrescue@nycgogreentours.net?subject=Investment%20Inquiry%20-%20P.A.W.S."
+              className="btn-secondary border-white text-white hover:bg-white/10"
+            >
+              Invest Now
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-200 bg-white py-8 sm:py-12">
+        <div className="container text-center text-sm text-[#333333]">
+          <p>&copy; 2026 P.A.W.S. (Pet Alert Warning System LLC). All rights reserved.</p>
+        </div>
+      </footer>
+    </div>
+  );
+}

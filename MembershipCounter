@@ -1,0 +1,86 @@
+/**
+ * Membership Counter Component
+ * Displays real-time count of free membership slots remaining
+ */
+
+import React, { useEffect, useState } from "react";
+import { Card } from "@/components/ui/card";
+import { trpc } from "@/lib/trpc";
+
+export function MembershipCounter() {
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const getRemainingSlots = trpc.membership.getRemainingFreeSlots.useQuery();
+  const getMembershipData = trpc.membership.getMembershipCounter.useQuery();
+
+  useEffect(() => {
+    if (getRemainingSlots.data !== undefined) {
+      setRemaining(getRemainingSlots.data);
+      setIsLoading(false);
+    }
+  }, [getRemainingSlots.data]);
+
+  const totalSignups = getMembershipData.data?.totalSignups || 0;
+  const freeSignups = getMembershipData.data?.freeSignups || 0;
+  const maxFreeMembers = getMembershipData.data?.maxFreeMembers || 10000;
+
+  const percentageFilled = Math.round((freeSignups / maxFreeMembers) * 100);
+  const percentageRemaining = 100 - percentageFilled;
+
+  if (isLoading || remaining === null) {
+    return null;
+  }
+
+  return (
+    <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-300 p-6">
+      <div className="space-y-4">
+        {/* Header */}
+        <div className="text-center">
+          <h3 className="text-xl font-bold text-orange-900">🎉 First 10K Members Get FREE Lifetime Access!</h3>
+          <p className="text-sm text-orange-800 mt-1">Join P.A.W.S. and protect your pets today</p>
+        </div>
+
+        {/* Counter Display */}
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="bg-white rounded-lg p-3">
+            <div className="text-2xl font-bold text-orange-600">{freeSignups.toLocaleString()}</div>
+            <div className="text-xs text-gray-600">Members Joined</div>
+          </div>
+          <div className="bg-white rounded-lg p-3">
+            <div className="text-2xl font-bold text-green-600">{remaining.toLocaleString()}</div>
+            <div className="text-xs text-gray-600">Slots Remaining</div>
+          </div>
+          <div className="bg-white rounded-lg p-3">
+            <div className="text-2xl font-bold text-blue-600">{percentageFilled}%</div>
+            <div className="text-xs text-gray-600">Filled</div>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="space-y-2">
+          <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+            <div
+              className="bg-gradient-to-r from-orange-500 to-orange-600 h-full transition-all duration-500"
+              style={{ width: `${percentageFilled}%` }}
+            />
+          </div>
+          <div className="text-xs text-center text-orange-900 font-semibold">
+            {remaining > 0 
+              ? `⏰ Hurry! Only ${remaining.toLocaleString()} free slots left`
+              : "✅ Free tier is now full - Premium pricing applies"}
+          </div>
+        </div>
+
+        {/* Call to Action */}
+        {remaining > 0 && (
+          <div className="bg-orange-600 text-white rounded-lg p-3 text-center">
+            <p className="text-sm font-semibold">
+              Don't miss out! Claim your FREE membership before slots run out.
+            </p>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}

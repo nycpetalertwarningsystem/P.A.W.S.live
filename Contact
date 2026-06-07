@@ -1,0 +1,246 @@
+import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { useLocation } from "wouter";
+import { Mail, Phone, MapPin, Send } from "lucide-react";
+import { toast } from "sonner";
+
+export default function Contact() {
+  const [, setLocation] = useLocation();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+    inquiryType: "general" as "general" | "investor" | "partnership",
+  });
+
+  const submitMutation = trpc.contact.submit.useMutation({
+    onSuccess: () => {
+      toast.success("Thank you! We'll be in touch soon.");
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        message: "",
+        inquiryType: "general",
+      });
+      setTimeout(() => setLocation("/"), 2000);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to submit form. Please try again.");
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email || !formData.message) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    submitMutation.mutate(formData);
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="border-b border-gray-200 bg-[#F5F5F5] py-12 sm:py-20">
+        <div className="container">
+          <h1 className="mb-4 text-4xl font-bold text-[#1A1A1A] sm:text-5xl">
+            Get in Touch
+          </h1>
+          <p className="text-lg text-[#333333]">
+            Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+          </p>
+        </div>
+      </div>
+
+      {/* Contact Section */}
+      <section className="py-12 sm:py-20 lg:py-32">
+        <div className="container grid gap-12 lg:grid-cols-3">
+          {/* Contact Info */}
+          <div className="lg:col-span-1">
+            <div className="space-y-8">
+              <div>
+                <div className="mb-4 flex items-center gap-3">
+                  <Mail className="h-6 w-6 text-[#FF6B35]" />
+                  <h3 className="font-bold text-[#1A1A1A]">Email</h3>
+                </div>
+                <p className="text-[#333333]">paws_petrescue@nycgogreentours.net</p>
+              </div>
+
+              <div>
+                <div className="mb-4 flex items-center gap-3">
+                  <Phone className="h-6 w-6 text-[#FF6B35]" />
+                  <h3 className="font-bold text-[#1A1A1A]">Phone</h3>
+                </div>
+                <p className="text-[#333333]">Contact form for inquiries</p>
+              </div>
+
+              <div>
+                <div className="mb-4 flex items-center gap-3">
+                  <MapPin className="h-6 w-6 text-[#FF6B35]" />
+                  <h3 className="font-bold text-[#1A1A1A]">Location</h3>
+                </div>
+                <p className="text-[#333333]">New York City, NY</p>
+              </div>
+
+              <div className="rounded-xl bg-[#FF6B35]/10 p-6">
+                <h4 className="mb-2 font-bold text-[#1A1A1A]">Response Time</h4>
+                <p className="text-sm text-[#333333]">
+                  We typically respond to inquiries within 24 business hours.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Form */}
+          <div className="lg:col-span-2">
+            <form onSubmit={handleSubmit} className="card-paws">
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">
+                    Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Your name"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-[#1A1A1A] placeholder-gray-400 focus:border-[#FF6B35] focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="your@email.com"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-[#1A1A1A] placeholder-gray-400 focus:border-[#FF6B35] focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">
+                    Phone
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="(555) 123-4567"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-[#1A1A1A] placeholder-gray-400 focus:border-[#FF6B35] focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">
+                    Inquiry Type
+                  </label>
+                  <select
+                    name="inquiryType"
+                    value={formData.inquiryType}
+                    onChange={handleChange}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-[#1A1A1A] focus:border-[#FF6B35] focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20"
+                  >
+                    <option value="general">General Inquiry</option>
+                    <option value="investor">Investor Inquiry</option>
+                    <option value="partnership">Partnership Opportunity</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">
+                  Message *
+                </label>
+                <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  placeholder="Tell us more about your inquiry..."
+                  rows={6}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-[#1A1A1A] placeholder-gray-400 focus:border-[#FF6B35] focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20"
+                  required
+                ></textarea>
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitMutation.isPending}
+                className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitMutation.isPending ? (
+                  "Sending..."
+                ) : (
+                  <>
+                    Send Message <Send className="ml-2 h-5 w-5" />
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="bg-[#F5F5F5] py-12 sm:py-20 lg:py-32">
+        <div className="container">
+          <h2 className="section-title mb-12 text-center">Frequently Asked Questions</h2>
+
+          <div className="grid gap-8 sm:grid-cols-2">
+            {[
+              {
+                q: "How do I register my pet?",
+                a: "Sign up for an account, create a pet profile with your pet's details, upload a photo, and add emergency contacts. It takes just a few minutes!",
+              },
+              {
+                q: "What subscription plans are available?",
+                a: "We offer Basic, Premium, and Enterprise plans tailored to different needs. Contact us for pricing and details.",
+              },
+              {
+                q: "How do emergency responders access pet data?",
+                a: "First responders can securely query addresses to instantly retrieve all registered pet and household emergency information.",
+              },
+              {
+                q: "Is my pet data secure?",
+                a: "Yes! We use enterprise-grade encryption and security measures to protect all your pet's information.",
+              },
+              {
+                q: "Can I update my pet's information?",
+                a: "Absolutely. You can update your pet's profile, medical information, and emergency contacts anytime from your dashboard.",
+              },
+              {
+                q: "How can I become an investor?",
+                a: "We're seeking $3 million in capital. Please submit an investor inquiry and our team will be in touch.",
+              },
+            ].map((item, idx) => (
+              <div key={idx} className="card-paws">
+                <h3 className="mb-3 font-bold text-[#1A1A1A]">{item.q}</h3>
+                <p className="text-[#333333]">{item.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
