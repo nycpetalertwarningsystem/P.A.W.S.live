@@ -21,6 +21,6 @@
   },
   "server": {
     "type": "http",
-    "url": "https://YOUR_BACKEND_URL/api/run"
+    "url": "https://petalertwarningsystem.manus.space/backend/api/run"
   }
 }
