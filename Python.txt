@@ -1,0 +1,5 @@
+@server.tool()
+def get_legal_instructions():
+    """Return the saved step-by-step motion instructions."""
+    with open("legal_workspace/instructions/vikk_motion_plan.txt", "r") as f:
+        return f.read()

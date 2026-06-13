@@ -1,71 +1,52 @@
-import { pgTable, serial, varchar, text, integer, timestamp, boolean, jsonb, index } from "drizzle-orm/pg-core";
+import { mysqlTable, int, varchar, text, decimal, timestamp, json, mysqlEnum } from "drizzle-orm/mysql-core";
 import { sql } from "drizzle-orm";
 
-// 1. HOUSEHOLDS / SUBSCRIPTION ACCOUNTS
-export const households = pgTable("households", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  subscriptionTier: varchar("subscription_tier", { length: 50 }).default("basic").notNull(), // basic, premium, family_plus
-  
-  // Normalized Address fields heavily indexed for sub-2-second CAD location matching
-  streetAddress: varchar("street_address", { length: 255 }).notNull(),
-  apartment: varchar("apartment", { length: 50 }),
-  city: varchar("city", { length: 100 }).notNull(),
-  state: varchar("state", { length: 50 }).notNull(),
-  zipCode: varchar("zip_code", { length: 20 }).notNull(),
-  
-  // Structural documents (Premium / Family Plus tier)
-  floorPlanUrl: text("floor_plan_url"), // S3 URL containing layout blueprints
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-}, (table) => ({
-  // GIN or B-Tree indexes on physical location data for instantaneous matching during 911 keying
-  addressIdx: index("address_lookup_idx").on(table.streetAddress, table.zipCode),
-}));
-
-// 2. PET INCIDENT PROFILES
-export const pets = pgTable("pets", {
-  id: serial("id").primaryKey(),
-  householdId: integer("household_id").references(() => households.id).notNull(),
-  name: varchar("name", { length: 100 }).notNull(),
-  species: varchar("species", { length: 100 }).notNull(), // Dog, Cat, Exotic, etc.
-  count: integer("count").default(1).notNull(), // Important for responder headcounts
-  temperament: varchar("temperament", { length: 100 }).notNull(), // e.g., "Friendly", "Protective/Aggressive when panicked"
-  hidingSpots: text("hiding_spots"), // Critical: "Hides under master bed", "Basement boiler room"
-  photoUrl: text("photo_url"), // Visual confirmation for on-scene rescue
-  wearableDeviceSync: jsonb("wearable_device_sync"), // Pulls latest tracking coordinates if integrated (Fi, Tractive)
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+export const pets = mysqlTable("pets", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  species: varchar("species", { length: 100 }).notNull(),
+  breed: varchar("breed", { length: 255 }),
+  age: int("age"),
+  photoUrl: text("photoUrl"),
+  description: text("description"),
+  createdAt: timestamp("createdAt").default(sql`(now())`).notNull(),
+  updatedAt: timestamp("updatedAt").default(sql`(now())`).onUpdateNow().notNull(),
 });
 
-// 3. SPECIAL-NEEDS RESIDENTS (HIPAA Aligned & NYC Local Law 12 Compliant)
-export const specialNeedsResidents = pgTable("special_needs_residents", {
-  id: serial("id").primaryKey(),
-  householdId: integer("household_id").references(() => households.id).notNull(),
-  count: integer("count").default(1).notNull(),
-  // Strict classification markers used to toggle immediate high-visibility warnings on MDTs
-  hasMobilityImpairment: boolean("has_mobility_impairment").default(false).notNull(),
-  isOxygenDependent: boolean("is_oxygen_dependent").default(false).notNull(),
-  hasCognitiveChallenge: boolean("has_cognitive_challenge").default(false).notNull(), // Autism, Alzheimer's (Non-verbal triggers)
-  
-  criticalRescueInstructions: text("critical_rescue_instructions").notNull(), // "First floor bedroom, non-verbal, do not yell"
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+export const alertThresholds = mysqlTable("alertThresholds", {
+  id: int("id").autoincrement().primaryKey(),
+  petId: int("petId").notNull(),
+  alertType: varchar("alertType", { length: 100 }).notNull(), // e.g., 'temperature', 'heart_rate'
+  minValue: decimal("minValue", { precision: 10, scale: 2 }),
+  maxValue: decimal("maxValue", { precision: 10, scale: 2 }),
+  enabled: int("enabled").default(1).notNull(), // 1 for true, 0 for false
+  notificationMethods: json("notificationMethods").default(['in_app']),
+  createdAt: timestamp("createdAt").default(sql`(now())`).notNull(),
+  updatedAt: timestamp("updatedAt").default(sql`(now())`).onUpdateNow().notNull(),
 });
 
-// 4. MUNICIPAL CAD INTEGRATIONS & RESPONDERS
-export const cadAgencies = pgTable("cad_agencies", {
-  id: serial("id").primaryKey(),
-  agencyName: varchar("agency_name", { length: 100 }).notNull(), // e.g., "FDNY Dispatch", "NYCEM"
-  apiKeyHash: text("api_key_hash").notNull(), // Secure hash of token used for CAD webhook calls
-  isActive: boolean("is_active").default(true).notNull(),
+export const alertHistory = mysqlTable("alertHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  petId: int("petId").notNull(),
+  alertType: varchar("alertType", { length: 100 }).notNull(),
+  severity: mysqlEnum("severity", ['low', 'medium', 'high', 'critical']).notNull(),
+  message: text("message").notNull(),
+  value: decimal("value", { precision: 10, scale: 2 }),
+  acknowledged: int("acknowledged").default(0).notNull(),
+  acknowledgedAt: timestamp("acknowledgedAt"),
+  createdAt: timestamp("createdAt").default(sql`(now())`).notNull(),
 });
 
-// 5. MILITARY-GRADE AUDIT LOGS (Required for CJIS and HIPAA transmission alignment)
-export const emergencyAccessLogs = pgTable("emergency_access_logs", {
-  id: serial("id").primaryKey(),
-  agencyId: integer("agency_id").references(() => cadAgencies.id),
-  cadIncidentId: varchar("cad_incident_id", { length: 100 }).notNull(), // Link directly to the municipal 911 event ID
-  queriedAddress: text("queried_address").notNull(),
-  payloadDispatched: jsonb("payload_dispatched").notNull(), // Snapshot of what data was sent into the danger zone
-  executionTimeMs: integer("execution_time_ms").notNull(), // SLA tracking to ensure < 2000ms response loop
-  timestamp: timestamp("timestamp").defaultNow().notNull(),
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  petId: int("petId").notNull(),
+  alertHistoryId: int("alertHistoryId"),
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  type: mysqlEnum("type", ['alert', 'info', 'warning', 'success']).default('alert'),
+  read: int("read").default(0).notNull(),
+  readAt: timestamp("readAt"),
+  createdAt: timestamp("createdAt").default(sql`(now())`).notNull(),
 });
