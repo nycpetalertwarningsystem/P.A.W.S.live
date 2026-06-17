@@ -6,6 +6,8 @@ import { eq, and, desc } from "drizzle-orm";
 
 export const appRouter = router({
   // --- PETS ROUTER ---
+  import { onboardingRouter } from "./onboardingRouter";
+
   pets: router({
     list: protectedProcedure.query(async ({ ctx }) => {
       return await db.select().from(pets).where(eq(pets.userId, ctx.user.id));
