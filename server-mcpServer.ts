@@ -158,3 +158,5 @@ main().catch((error) => {
   console.error("[P.A.W.S. MCP FATAL ERROR] Core protocol crash:", error);
   process.exit(1);
 });
+- name: Github Sync
+  uses: repo-sync/github-sync@v2.3.0
