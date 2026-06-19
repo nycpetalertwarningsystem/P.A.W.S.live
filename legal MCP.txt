@@ -1,3 +1,0 @@
-legal-mcp/server/
-legal-mcp/memory/
-legal-mcp/legal_workspace/
